@@ -1,0 +1,44 @@
+pipeline{
+    agent any
+    stages{
+        stage('checkout from git'){
+            steps{
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bhavanandan/Practice.git']])
+            }
+        }
+        stage('docker login'){
+            steps{
+                withCredentials([string(credentialsId: 'dockerhub-token', variable: 'DOCKER_PASS')]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u veera0909 --password-stdin'
+                }
+            }
+        }
+        stage('docker image'){
+            steps{
+                script{
+                    sh 'docker build -t veera0909/my-app:latest .'
+                }
+            }
+        }
+        stage('push to docker hub'){
+            steps{
+                script{
+                    sh 'docker push veera0909/my-app:latest'
+                }
+            }
+        }
+        stage('deploy to k8s'){
+            steps{
+                withCredentials([file(credentialsId: 'k8s-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                
+                    sh '''
+                      echo "Using kubeconfig at $KUBECONFIG_FILE"
+                      kubectl --kubeconfig=$KUBECONFIG_FILE cluster-info
+                      kubectl --kubeconfig=$KUBECONFIG_FILE get pods -n default
+                      kubectl --kubeconfig=$KUBECONFIG_FILE apply -f deployment.yaml
+                    '''
+                }
+            }
+        }
+    }
+}
