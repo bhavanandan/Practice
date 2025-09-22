@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+apiVersion: v1
 kind: Deployment
 metadata:
   name: nginx-deployment
@@ -16,6 +16,6 @@ spec:
     spec: 
       containers:
       - name: nginx
-        image: nginx:latest
+        image: veera0909/my-app:latest
         ports:
         - containerPort: 80
